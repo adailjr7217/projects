@@ -53,8 +53,7 @@ def values_elements(id_elem, val_elem):
     for i, (key, value) in enumerate(dictionary_items):
             if int(id_elem,16) == value[0] and int(val_elem,16) == value[1] or val_elem == value[1]:
                 return key
-    else:
-        return " "
+    return " "
 
 
 def avl_data(packet_lst, count_avl):
