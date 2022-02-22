@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[20]:
-
-
 import datetime as dt
 
 packet = input("Insert data packet:\n")
