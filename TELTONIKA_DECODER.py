@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
-#Decoder v1.7
+#Decoder v1.7.2
 import datetime as dt
+import codecs
 import os
 
 packet = input("Insert data packet:\n")
@@ -70,7 +71,6 @@ def avl_data(packet_lst, count_avl):
     while count_avl<=len_packet:
         #This script don't show date and time with GMT+3 as teltonika parser
         timestamp = "".join(packet_lst[count_avl:count_avl+16])
-        print(timestamp)
         timestamp = val_comp(timestamp,16)/1000
         date_time_1 = dt.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         print("Timestamp:" , date_time_1)
@@ -126,8 +126,10 @@ def avl_data(packet_lst, count_avl):
             
             if int("".join(packet_lst[count+4:count+8]),16) == 256:
                 print("Id:", int("".join(packet_lst[count+4:count+8]),16))
+                binary_str = codecs.decode("".join(packet_lst[count+12:count+46]), "hex")
+                print("Vehicle identification number(VIN):",str(binary_str,'utf-8'))
                 count+=12
-                print("Value:", "".join(packet_lst[count:count+34]))
+#                print("Value:", "".join(packet_lst[count:count+34]))
                 count+=34
                 if int("".join(packet_lst[count:count+4]),16) == 281:
                     print("AVL Data:", int("".join(packet_lst[count:count+4]),16))
@@ -215,3 +217,18 @@ def avl_data(packet_lst, count_avl):
 
 avl_data(packet_list,count_avl_data)
 os.system("pause")
+""""
+ID 256
+
+Protocol:6 – specifies the protocol supported by the car.
+
+VIN: WVWZZZAUZFW125650 - specifies car VIN number.
+
+ST: PROTOCOLDETECTION - specifies the OBD application state.
+
+P1:0x98180001,P2:0x1,P3:0xE0800020,P4:0x0 - specifies available vehicle PIDs. These values denote the available parameters in a given car. If all PID values are 0 (P1:0x0,P2:0x0,P3:0x0,P4:0x0), it means that OBD parameters are not readable.
+
+MIL:0 - mil status, indicates the state of the LED (0- OFF, 1-ON).
+
+DTC:0 – the number of errors.
+"""
