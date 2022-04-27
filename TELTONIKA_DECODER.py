@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
 #Decoder v1.7.2
 import datetime as dt
 import codecs
@@ -8,15 +6,10 @@ import os
 packet = input("Insert data packet:\n")
 packet_list = list(packet)
 lenght = "".join(packet_list[0:4])
-print("Lenght:" , int(lenght, 16))
 packet_id = "".join(packet_list[4:8])
-print("Packet id:" , int(packet_id, 16))
 none_bit = "".join(packet_list[8:10])
-print("Non used bit:" , none_bit)
 avl_id = "".join(packet_list[10:12])
-print("AVL packet ID:" , int(avl_id,16))
 imei_lenght = "".join(packet_list[12:16])
-print("Imei Lenght:" , int(imei_lenght, 16))
 imei_tmp = packet[16:46]
 imei = []
 for i in range(len(imei_tmp)):
@@ -24,12 +17,20 @@ for i in range(len(imei_tmp)):
         imei.append(imei_tmp[i])
     i+=1
 imei = "".join(imei)
-print("Imei:", imei)
 codec = "".join(packet_list[46:48])
-print("Codec type hex:" , codec)
 data_num = "".join(packet_list[48:50])
-print("Number of Data records:" , int(data_num,16))
 count_avl_data = 50
+print(
+    "Lenght:" , int(lenght, 16),"\n",
+    "Packet id:" , int(packet_id, 16),"\n",
+    "Non used bit:" , none_bit,"\n",
+    "AVL packet ID:" , int(avl_id,16),"\n",
+    "Imei Lenght:" , int(imei_lenght, 16),"\n",
+    "Imei:", imei,"\n",
+    "Codec type hex:" , codec,"\n",
+    "Number of Data records:" , int(data_num,16)
+)
+
 
 #Convert hex to coordinate function
 def decode_hex_coord(coord):
@@ -73,29 +74,31 @@ def avl_data(packet_lst, count_avl):
         timestamp = "".join(packet_lst[count_avl:count_avl+16])
         timestamp = val_comp(timestamp,16)/1000
         date_time_1 = dt.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
-        print("Timestamp:" , date_time_1)
         count_avl+=16
         prior = int("".join(packet_lst[count_avl:count_avl+2]))
-        print("Priority:" , prior)
         count_avl+=2
         lat_hex = "".join(packet_lst[count_avl:count_avl+8])
-        print("Latitude:" , decode_hex_coord(lat_hex))
         count_avl+=8
         long_hex = "".join(packet_lst[count_avl:count_avl+8])
-        print("Longitude:" , decode_hex_coord(long_hex))
         count_avl+=8
         alt = int("".join(packet_lst[count_avl:count_avl+4]),16)
-        print("Altitude:" , alt)
         count_avl+=4
         angle = int("".join(packet_lst[count_avl:count_avl+4]),16)
-        print("Angle:" , angle)
         count_avl+=4
         sat = int("".join(packet_lst[count_avl:count_avl+2]),16)
-        print("Satellites:" , sat)
         count_avl+=2
         speed = "".join(packet_lst[count_avl:count_avl+4])
-        print("Speed:" , int(speed,16))
         count_avl+=4
+        print(
+            "Timestamp:" , date_time_1,"\n",
+            "Priority:" , prior,"\n",
+            "Latitude:" , decode_hex_coord(lat_hex),"\n",
+            "Longitude:" , decode_hex_coord(long_hex),"\n",
+             "Altitude:" , alt,"\n",
+             "Angle:" , angle,"\n",
+             "Satellites:" , sat,"\n",
+             "Speed:" , int(speed,16)
+            )
         if codec == "8e" or codec == "8E":
             io_id = int("".join(packet_lst[count_avl:count_avl+4]),16)
             print("Event IO Id:" , io_id)
@@ -114,7 +117,7 @@ def avl_data(packet_lst, count_avl):
                 for j in range(byte_num):
                     elem_id = "".join(packet_lst[count:count+4])
                     elem_val = "".join(packet_lst[count+4:count+4+(2*i)])
-                    if int(elem_id,16)==17 or int(elem_id,16)==18 or int(elem_id,16)==19:
+                    if int(elem_id,16)==17 or int(elem_id,16)==18 or int(elem_id,16)==19 or int(elem_id,16)==25:
                         elem_val = val_comp(elem_val,16)
                     count+=(2*i)+4
                     if type(elem_val)==int:
@@ -128,9 +131,7 @@ def avl_data(packet_lst, count_avl):
                 print("Id:", int("".join(packet_lst[count+4:count+8]),16))
                 binary_str = codecs.decode("".join(packet_lst[count+12:count+46]), "hex")
                 print("Vehicle identification number(VIN):",str(binary_str,'utf-8'))
-                count+=12
-#                print("Value:", "".join(packet_lst[count:count+34]))
-                count+=34
+                count+=46
                 if int("".join(packet_lst[count:count+4]),16) == 281:
                     print("AVL Data:", int("".join(packet_lst[count:count+4]),16))
                     count_min = count+4
@@ -147,27 +148,24 @@ def avl_data(packet_lst, count_avl):
                 print("Beacon Data Lenght:", len_beacon)
                 count+=4
                 range_beacon=int((len_beacon*2-2)/44)
-                print(range_beacon)
-                """"
-                print("Beacon Data:", "".join(packet_lst[count:count+len_beacon*2]))
-                count+=len_beacon*2
-                """
                 for i in range(range_beacon):
                     beacon_flag = "".join(packet_lst[count+2:count+4])
-                    print("Beacon flag:", beacon_flag)
                     count+=6
                     beacon_id = "".join(packet_lst[count:count+30])
-                    print("Beacon UUID:", beacon_id)
                     count+=30
                     beacon_major = int("".join(packet_lst[count:count+4]),16)
-                    print("Major:", beacon_major)
                     count+=4
                     beacon_minor = int("".join(packet_lst[count:count+4]),16)
-                    print("Minor:", beacon_minor)
                     count+=4
                     beacon_rssi = "".join(packet_lst[count:count+2])
                     beacon_rssi = val_comp(beacon_rssi,8)
-                    print("Beacon rssi:", beacon_rssi)
+                    print(
+                        "Beacon flag:", beacon_flag,"\n",
+                        "Beacon UUID:", beacon_id,"\n",
+                        "Major:", beacon_major,"\n",
+                        "Minor:", beacon_minor,"\n",
+                        "Beacon rssi:", beacon_rssi
+                    )
                 count_min = count-2
                 count_avl = count_min
 
@@ -201,7 +199,7 @@ def avl_data(packet_lst, count_avl):
                     elem_id = "".join(packet_lst[count:count+2])
                     elem_val = "".join(packet_lst[count+2:count+2+(2*i)])
                     count+=(2*i)+2
-                    if int(elem_id,16)==17 or int(elem_id,16)==18 or int(elem_id,16)==19:
+                    if int(elem_id,16)==17 or int(elem_id,16)==18 or int(elem_id,16)==19 or int(elem_id,16)==25:
                         elem_val = val_comp(elem_val,16)
                     if type(elem_val)==int:
                         print("Parameter: {}, Value: {}".format(bytes_elements(elem_id),elem_val,16), values_elements(elem_id,elem_val))
@@ -214,21 +212,5 @@ def avl_data(packet_lst, count_avl):
     len_end = len(packet_lst)
     print("AVL data count:", "".join(packet_lst[len_end-2:len_end]))
 
-
 avl_data(packet_list,count_avl_data)
 os.system("pause")
-""""
-ID 256
-
-Protocol:6 – specifies the protocol supported by the car.
-
-VIN: WVWZZZAUZFW125650 - specifies car VIN number.
-
-ST: PROTOCOLDETECTION - specifies the OBD application state.
-
-P1:0x98180001,P2:0x1,P3:0xE0800020,P4:0x0 - specifies available vehicle PIDs. These values denote the available parameters in a given car. If all PID values are 0 (P1:0x0,P2:0x0,P3:0x0,P4:0x0), it means that OBD parameters are not readable.
-
-MIL:0 - mil status, indicates the state of the LED (0- OFF, 1-ON).
-
-DTC:0 – the number of errors.
-"""
